@@ -1,5 +1,6 @@
 name: Commit Stage
 on: push
+
 env:
    REGISTRY: ghcr.io
    IMAGE_NAME: justanu/catalog-service
@@ -21,6 +22,10 @@ jobs:
               distribution: temurin
               java-version: 17
               cache: gradle
+         - name: Build, unit tests and integration tests
+           run: |
+              chmod +x gradlew
+              ./gradlew build
          - name: Code vulnerability scanning
            uses: anchore/scan-action@v3
            id: scan
@@ -33,10 +38,6 @@ jobs:
            if: success() || failure()
            with:
               sarif_file: ${{ steps.scan.outputs.sarif }}
-         - name: Build, unit tests and integration tests
-           run: |
-              chmod +x gradlew
-              ./gradlew build
    package:
       name: Package and Publish
       if: ${{ github.ref == 'refs/heads/main' }}
@@ -49,7 +50,7 @@ jobs:
       steps:
          - name: Checkout source code
            uses: actions/checkout@v3
-         - name : Setup JDK
+         - name: Setup JDK
            uses: actions/setup-java@v3
            with:
                distribution: temurin
@@ -58,7 +59,7 @@ jobs:
          - name: Build container image
            run: |
                chmod +c gradlew
-               ./gradlew build bootBuildImage --imageName ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+               ./gradlew bootBuildImage --imageName ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
          - name: OCI image vulnerability scanning
            uses: anchore/scan-action@v3
            id: scan
